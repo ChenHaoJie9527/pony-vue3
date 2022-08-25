@@ -24,3 +24,25 @@ Vue3 响应式核心，对数据进行 getter 和 setter，依赖收集和触发
   1. init 初始化
   2. getter 收集依赖
   3. setter 触发依赖
+
+### 1.1 创建 reactive 代理对象
+
+```ts
+export function reactive(raw) {
+  return new Proxy(raw, {
+    get(target, key) {
+      // {foo: 10}
+      // Reflect 弱引用
+      const res = Reflect.get(target, key);
+      // TODO 依赖收集
+      return res;
+    },
+    set(target, key, value) {
+      const res = Reflect.set(target, key, value);
+      // TODO 触发依赖
+      return res;
+    },
+  });
+}
+```
+
