@@ -1,4 +1,5 @@
 import { reactive } from "../reactive";
+import { effect } from "../effect";
 describe("effect", () => {
   it("happy path", () => {
     const user = reactive({
