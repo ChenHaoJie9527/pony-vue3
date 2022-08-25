@@ -13,7 +13,7 @@ describe("effect", () => {
     expect(nextAge).toBe(11);
 
     // update 更新响应对象值
-    nextAge.foo++;
+    user.foo++;
     expect(nextAge).toBe(12);
   });
 });

@@ -1,4 +1,3 @@
-let activeEffect; // 全局变量 用于获取effect的fn
 class ReactiveEffect {
   private _fn;
   constructor(fn) {
@@ -8,13 +7,6 @@ class ReactiveEffect {
     activeEffect = this;
     this._fn();
   }
-}
-
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
-
-  // effect 初始化执行 fn
-  _effect.run();
 }
 
 const targetMap = new Map();
@@ -38,7 +30,31 @@ export function track(target, key) {
   let dep = depsMap.get(key); // 获取 key 对应的 容器
   if (!dep) {
     dep = new Set();
+    depsMap.set(key, dep);
   }
   // 收集依赖
   dep.add(activeEffect);
+}
+
+/**
+ *
+ * @param target 依赖对象
+ * @param key 依赖对象的key
+ * 基于当前的 target 和 key，取出对应的 dep 容器
+ */
+export function trigger(target, key) {
+  let depsMap = targetMap.get(target);
+  let deps = depsMap.get(key); // 取出 key 对应的 容器
+
+  for (const effect of deps) {
+    effect.run();
+  }
+}
+
+let activeEffect; // 全局变量 用于获取effect的fn
+export function effect(fn) {
+  const _effect = new ReactiveEffect(fn);
+
+  // effect 初始化执行 fn
+  _effect.run();
 }
