@@ -41,6 +41,11 @@ export function track(target, key) {
   dep.add(activeEffect);
 }
 
+/**
+ * @param target 依赖收集对象
+ * @param key 依赖收集对象的eky
+ * target => key => dep 即通过 target 取出 key 对应的 dep ，dep 里收集了依赖会被循环触发调用 fn.call() 
+ */
 export function trigger(target, key) {
   const depsMap = targetMaps.get(target);
   const deps = depsMap.get(key);
