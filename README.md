@@ -80,5 +80,60 @@ export function reactive(raw) {
 
 ### 1.2 effect 实现依赖收集和触发依赖
 
+1. 初始化时，`effect` 触发回调 执行`副作用函数`里的逻辑，访问 `user.foo`  `getter` 触发依赖收集  `track` 
 
+   ```ts
+   new Proxy(raw, {
+           get(target, key) {
+               const res = Reflect.get(target, key);
+               //TODO: getter 依赖收集
+               track(target, key)
+               return res;
+           },
+           set(target, key, value) {
+               const res = Reflect.set(target, key, value);
+               // TODO: setter 触发依赖
+               trigger(target, key)
+               return res;
+           }
+       });
+   ```
+
+   
+
+2. `track` 依赖收集函数
+
+   ```ts
+   let targetMaps = new Map();
+   /**
+    * @param target 依赖收集对象
+    * @param key 依赖收集对象的eky
+    * 对象里的key 需要有一个容器 用于收集依赖
+    * 关系：target => key => dep
+    */
+   export function track(target, key) {
+     let depMaps = targetMaps.get(target);
+     /**
+      * effect 初始化时，depMaps 为空
+      * effect 初始化时，dep 为空
+      */
+     if (!depMaps) {
+       depMaps = new Map();
+       targetMaps.set(target, depMaps); // 建立映射关系
+     }
+   
+     let dep = depMaps.get(key); // 取出 key 对应的 容器
+   
+     if (!dep) {
+       dep = new Set();
+       depMaps.set(key, dep); // key => dep 即每一个 key 对应 dep容器
+     }
+     dep.add(activeEffect);
+   }
+   ```
+
+   依赖收集存在一定的映射关系，即
+
+   - `target => key => dep` 即代理对象里的每一个 `key` 都有一个独一无二的 容器 `dep` 用于在 getter 触发时，收集依赖，而依赖则是 `effect` 里的 `fn副作用函数`
+   - 每一个 key 对应的 `dep` 容器是独一无二的，通过 `new Set()` 实现唯一性
 
