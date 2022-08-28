@@ -137,3 +137,27 @@ export function reactive(raw) {
    - `target => key => dep` 即代理对象里的每一个 `key` 都有一个独一无二的 容器 `dep` 用于在 getter 触发时，收集依赖，而依赖则是 `effect` 里的 `fn副作用函数`
    - 每一个 key 对应的 `dep` 容器是独一无二的，通过 `new Set()` 实现唯一性
 
+3. `trigger` 触发依赖
+
+   ```ts
+   /**
+    * @param target 依赖收集对象
+    * @param key 依赖收集对象的eky
+    * target => key => dep 即通过 target 取出 key 对应的 dep ，dep 里收集了依赖会被循环触发调用 fn.call() 
+    */
+   export function trigger(target, key) {
+     const depsMap = targetMaps.get(target);
+     const deps = depsMap.get(key);
+     for (const effect of deps) {
+       effect.run();
+     }
+   }
+   ```
+
+   触发依赖，主要是在更新 响应对象值时，会触发 `setter` 操作，遍历 `deps` 容器里的依赖并触发。
+
+   主要是如何触发的：
+
+   1. 通过 `target` 查找对应的 `depsMap` 集合，即 `target => depsMap`
+   2. 每一个 `depsMap` 集合里的 `key` 对应 `set` 集合，遍历 `set` 集合找到每一个 依赖项，调用依赖项里的 `run` 方法，即调用 `effect` 里的 `副作用函数`，触发更新值。
+
