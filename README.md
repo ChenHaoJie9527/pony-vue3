@@ -188,3 +188,25 @@ expect(foo).toBe(12);
 expect(res).toBe('foo');
 ```
 
+只需要在  effect 里将 run 方法 return 出去即可：
+
+```ts
+class ReactiveEffect {
+  private _fn;
+  constructor(fn) {
+    this._fn = fn;
+  }
+  run() {
+    activeEffect = this;
+    return this._fn();
+  }
+}
+export function effect(fn) {
+  const _effect = new ReactiveEffect(fn);
+
+  // effect 初始化执行 fn
+  _effect.run();
+  // 将 run 方法返回出去 允许被调用
+  return _effect.run.bind(_effect);
+}
+```
