@@ -5,7 +5,7 @@ class ReactiveEffect {
   }
   run() {
     activeEffect = this;
-    this._fn();
+    return this._fn();
   }
 }
 
@@ -57,4 +57,6 @@ export function effect(fn) {
 
   // effect 初始化执行 fn
   _effect.run();
+  // 将 run 方法返回出去 允许被调用
+  return _effect.run.bind(_effect);
 }

@@ -161,3 +161,52 @@ export function reactive(raw) {
    1. 通过 `target` 查找对应的 `depsMap` 集合，即 `target => depsMap`
    2. 每一个 `depsMap` 集合里的 `key` 对应 `set` 集合，遍历 `set` 集合找到每一个 依赖项，调用依赖项里的 `run` 方法，即调用 `effect` 里的 `副作用函数`，触发更新值。
 
+### 1.3 effect 返回值
+
+引述：调用 effect 会返回一个 函数，当手动调用返回的这个函数时，会再次触发 effect 副作用函数
+
+**Tasking**：
+
+- [x] `effect(fn) => function(runner)`，即调用 `effect` 会返回一个 `runner` 函数
+- [x] 当调用 `runner` 函数时，会再次执行 `effect(fn)` 的 `fn` 副作用函数
+- [x] 当调用 `fn` 时，会将 `fn` 副作用函数的返回值 `return` 出去，即调用 `runner` 函数 会得到 `fn` 的返回值
+
+完成下面测试：
+
+```ts
+let foo = 10;
+const runner = effect(() => {
+    foo++;
+    return "foo"
+});
+// 验证 fn 是否执行
+expect(foo).toBe(11);
+// 验证 fn 是否执行
+const res = runner();
+expect(foo).toBe(12);
+//验证 fn 返回值
+expect(res).toBe('foo');
+```
+
+只需要在  effect 里将 run 方法 return 出去即可：
+
+```ts
+class ReactiveEffect {
+  private _fn;
+  constructor(fn) {
+    this._fn = fn;
+  }
+  run() {
+    activeEffect = this;
+    return this._fn();
+  }
+}
+export function effect(fn) {
+  const _effect = new ReactiveEffect(fn);
+
+  // effect 初始化执行 fn
+  _effect.run();
+  // 将 run 方法返回出去 允许被调用
+  return _effect.run.bind(_effect);
+}
+```
