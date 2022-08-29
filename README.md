@@ -210,3 +210,23 @@ export function effect(fn) {
   return _effect.run.bind(_effect);
 }
 ```
+
+### 1.4 effect 的 scheduler 功能
+
+**引述**：effect 方法 除了接收第一个参数为函数类型之外，还可以接受第二个可选参数。
+
+**Tasking:**
+
+- [ ] 通过 `effect` 的第二个参数给定一个 `scheduler` 的  `fn` 函数
+- [ ] `effect` 第一次执行的时候，还会执行 `fn` 函数
+- [ ] 当 响应式对象 `set` `update` ，不会执行 `effect` 的第一个参数 `fn` 副作用函数，而是执行 `scheduler`
+- [ ] 通过调用 `effect` 返回 `runner` 函数时，如果调用 `runner` 函数，会再次执行 `fn`
+
+实现下列单元测试：
+
+```ts
+it('scheduler', () => {
+    
+})
+```
+
