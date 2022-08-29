@@ -28,4 +28,37 @@ describe("effect", () => {
     expect(foo).toBe(12);
     expect(res).toBe("foo");
   });
+
+  it("scheduler", () => {
+    let dummy;
+    let run;
+    // 创建一个函数
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const _object = reactive({
+      foo: 10,
+    });
+    const runner = effect(
+      () => {
+        dummy = _object.foo;
+      },
+      { scheduler }
+    );
+    // 断言 scheduler 从未被调用过
+    expect(scheduler).not.toHaveBeenCalled();
+    // effect 初始化时，fn 被调用，dummy = 11
+    expect(dummy).toBe(11);
+
+    // 更新 响应对象的值
+    _object.foo++;
+    // 断言 scheduler 被调用 1 次
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    // 断言 还是 11 因为 此时不会执行 fn，而是执行 scheduler
+    expect(dummy).toBe(11);
+    // 调用 run ，因为响应式对象值更新后，effect会执行 scheduler，在scheduler中将 effect的返回值赋值给 run，调用 run 相当于调用 fn
+    run();
+    // 通过前面 run调用，执行了 fn，将最新的值赋值给 dummy
+    expect(dummy).toBe(12);
+  });
 });
