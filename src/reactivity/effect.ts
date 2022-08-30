@@ -1,6 +1,6 @@
 class ReactiveEffect {
   private _fn;
-  constructor(fn) {
+  constructor(fn, public scheduler?: any) {
     this._fn = fn;
   }
   run() {
@@ -47,13 +47,20 @@ export function trigger(target, key) {
   let deps = depsMap.get(key); // 取出 key 对应的 容器
 
   for (const effect of deps) {
-    effect.run();
+    // 当 存在 options 选项时，就要触发 scheduler 而不是 run
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
+      // 初始化时会触发 run 方法
+      effect.run();
+    }
   }
 }
 
 let activeEffect; // 全局变量 用于获取effect的fn
-export function effect(fn) {
-  const _effect = new ReactiveEffect(fn);
+export function effect(fn, options: any = {}) {
+  const { scheduler } = options;
+  const _effect = new ReactiveEffect(fn, scheduler);
 
   // effect 初始化执行 fn
   _effect.run();

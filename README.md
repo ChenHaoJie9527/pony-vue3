@@ -217,16 +217,87 @@ export function effect(fn) {
 
 **Tasking:**
 
-- [ ] 通过 `effect` 的第二个参数给定一个 `scheduler` 的  `fn` 函数
-- [ ] `effect` 第一次执行的时候，还会执行 `fn` 函数
-- [ ] 当 响应式对象 `set` `update` ，不会执行 `effect` 的第一个参数 `fn` 副作用函数，而是执行 `scheduler`
-- [ ] 通过调用 `effect` 返回 `runner` 函数时，如果调用 `runner` 函数，会再次执行 `fn`
+- [x] 通过 `effect` 的第二个参数给定一个 `scheduler` 的  `fn` 函数
+- [x] `effect` 第一次执行的时候，还会执行 `fn` 函数
+- [x] 当 响应式对象 `set` `update` ，不会执行 `effect` 的第一个参数 `fn` 副作用函数，而是执行 `scheduler`
+- [x] 通过调用 `effect` 返回 `runner` 函数时，如果调用 `runner` 函数，会再次执行 `fn`
 
 实现下列单元测试：
 
 ```ts
 it('scheduler', () => {
-    
+    let dummy;
+    let run;
+    // 创建一个函数
+    const scheduler = jest.fn(() => {
+      run = runner;
+    });
+    const _object = reactive({
+      foo: 10,
+    });
+    const runner = effect(
+      () => {
+        dummy = _object.foo;
+      },
+      { scheduler }
+    );
+    // 断言 scheduler 从未被调用过
+    expect(scheduler).not.toHaveBeenCalled();
+    // effect 初始化时，fn 被调用，dummy = 10
+    expect(dummy).toBe(10);
+
+    // // 更新 响应对象的值
+    _object.foo++;
+    // // 断言 scheduler 被调用 1 次
+    expect(scheduler).toHaveBeenCalledTimes(1);
+    // 断言 是 10 因为 此时不会执行 fn，而是执行 scheduler
+    expect(dummy).toBe(10);
+    // // 调用 run ，因为响应式对象值更新后，effect会执行 scheduler，在scheduler中将 effect的返回值赋值给 run，调用 run 相当于调用 fn
+    run();
+    // // 通过前面 run调用，执行了 fn，将最新的值赋值给 dummy
+    expect(dummy).toBe(11);
 })
+```
+
+要实现上面的单元通过，需要对 `effect` 进行调整：
+
+1. 允许支持传入 第二个参数；
+2. 在 `setter` 时， `update` 响应对象，对 trigger 进行判断 当传递了 `schedluer` 时，执行 `schedluer` ，否则执行 `run` 方法
+
+```ts
+class ReactiveEffect {
+  private _fn;
+    // 支持j
+  constructor(fn, public scheduler?: any) {
+    this._fn = fn;
+  }
+  run() {
+    activeEffect = this;
+    return this._fn();
+  }
+}
+export function trigger(target, key) {
+  let depsMap = targetMap.get(target);
+  let deps = depsMap.get(key); // 取出 key 对应的 容器
+
+  for (const effect of deps) {
+    // 当 存在 options 选项时，就要触发 scheduler 而不是 run
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
+      // 初始化时会触发 run 方法
+      effect.run();
+    }
+  }
+}
+export function effect(fn, options: any = {}) {
+  const { scheduler } = options;
+  const _effect = new ReactiveEffect(fn, scheduler);
+
+  // effect 初始化执行 fn
+  _effect.run();
+  // 将 run 方法返回出去 允许被调用
+  return _effect.run.bind(_effect);
+}
 ```
 
