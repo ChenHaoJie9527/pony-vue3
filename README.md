@@ -267,7 +267,7 @@ it('scheduler', () => {
 ```ts
 class ReactiveEffect {
   private _fn;
-    // 支持j
+    // 支持接收第二个参数
   constructor(fn, public scheduler?: any) {
     this._fn = fn;
   }
@@ -300,4 +300,6 @@ export function effect(fn, options: any = {}) {
   return _effect.run.bind(_effect);
 }
 ```
+
+### 1.5 effect 的 stop 功能
 
