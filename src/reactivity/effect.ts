@@ -1,11 +1,20 @@
 class ReactiveEffect {
   private _fn;
+  public deps: any[] = [];
   constructor(fn, public scheduler?: any) {
     this._fn = fn;
   }
   run() {
     activeEffect = this;
     return this._fn();
+  }
+  stop() {
+    this.deps.forEach((dep) => {
+      // dep 是 Set集合
+      const _dep: Set<any> = dep;
+      // 删除当前 实例
+      _dep.delete(this);
+    });
   }
 }
 
@@ -34,6 +43,8 @@ export function track(target, key) {
   }
   // 收集依赖
   dep.add(activeEffect);
+  // 收集容器
+  activeEffect.deps.push(dep);
 }
 
 /**
@@ -65,5 +76,14 @@ export function effect(fn, options: any = {}) {
   // effect 初始化执行 fn
   _effect.run();
   // 将 run 方法返回出去 允许被调用
-  return _effect.run.bind(_effect);
+  const runner: any = _effect.run.bind(_effect);
+  // 挂载实例
+  runner.effect = _effect;
+
+  return runner;
+}
+
+// stop 方法
+export function stop(runner) {
+  runner.effect.stop();
 }
