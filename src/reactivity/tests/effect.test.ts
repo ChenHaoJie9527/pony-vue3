@@ -84,5 +84,12 @@ describe("effect", () => {
     // 调用 runner 触发 effect 的 fn
     runner();
     expect(dummy).toBe(12);
+
+    stop(runner);
+    _object.foo = 13;
+    expect(dummy).not.toBe(13)
+    
+    runner();
+    expect(dummy).toBe(13);
   })
 });
