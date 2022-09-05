@@ -303,3 +303,112 @@ export function effect(fn, options: any = {}) {
 
 ### 1.5 effect 的 stop 功能
 
+**引述**：调用 `stop` 方法，会停止 `effect` 的 副作用函数调用，即 `effect` 不会触发 依赖更新。
+
+**实现思路**：在对响应式对象进行 `update` 时，会触发依赖更新，在 `trigger` 中 遍历收集到的 `deps`，并调用 `fn` 依赖。所以，在调用  `stop` 时，清空掉收集到的 依赖，就不会触发更新。
+
+**Tasking**:
+
+- [x] 在 `effect` 中实现 `stop` 方法，接收 一个参数 `runner
+
+  ```ts
+  // effect.ts
+  // stop 方法
+  export function stop(runner) {
+    
+  }
+  ```
+
+- [ ] 实现 `ReactiveEffect` 类方法 `stop`，类中声明`deps`属性，用于收集 `dep` 容器
+
+  ```ts
+  class ReactiveEffect {
+    private _fn;
+    public deps: any[] = [];
+    constructor(fn, public scheduler?: any) {
+      this._fn = fn;
+    }
+    run() {
+      activeEffect = this;
+      return this._fn();
+    }
+    stop() {
+      
+    });
+    }
+  }
+  export function track(target, key) {
+    // set 结构 数据唯一
+    // target => key => dep 每一个key都有一个唯一的容器
+    let depsMap = targetMap.get(target);
+  
+    // 初始化时，depsMap是为空，所以需要创建 Map
+    if (!depsMap) {
+      depsMap = new Map();
+      targetMap.set(target, depsMap);
+    }
+  
+    let dep = depsMap.get(key); // 获取 key 对应的 容器
+    if (!dep) {
+      dep = new Set();
+      depsMap.set(key, dep);
+    }
+    // 收集依赖
+    dep.add(activeEffect);
+    // 收集容器
+    activeEffect.deps.push(dep);
+  }
+  let activeEffect; // 全局变量 用于获取effect的fn
+  export function effect(fn, options: any = {}) {
+    const { scheduler } = options;
+    const _effect = new ReactiveEffect(fn, scheduler);
+  
+    // effect 初始化执行 fn
+    _effect.run();
+    // 将 run 方法返回出去 允许被调用
+    const runner: any = _effect.run.bind(_effect);
+    // 挂载实例
+    runner.effect = _effect;
+  
+    return runner;
+  }
+  ```
+
+- [ ] 在 `stop` 方法中调用 `effect` 实例的 `stop`方法
+
+  ```ts
+  // stop 方法
+  export function stop(runner) {
+    runner.effect.stop();
+  }
+  ```
+
+- [ ] 遍历 deps，清空 dep 容器
+
+  ```ts
+  class ReactiveEffect {
+    private _fn;
+    public deps: any[] = [];
+    constructor(fn, public scheduler?: any) {
+      this._fn = fn;
+    }
+    run() {
+      activeEffect = this;
+      return this._fn();
+    }
+    stop() {
+      // 删除 deps 里的 effect
+      clearDepEffect(this);
+    }
+  }
+  function clearDepEffect(effect) {
+    effect.deps.forEach((dep) => {
+      // dep 是 Set集合
+      const _dep: Set<any> = dep;
+      // 删除当前 实例
+      _dep.delete(effect);
+    });
+  }
+  ```
+
+  
