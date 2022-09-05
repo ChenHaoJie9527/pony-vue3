@@ -88,5 +88,8 @@ describe("effect", () => {
     stop(runner);
     _object.foo = 13;
     expect(dummy).not.toBe(13)
+    
+    runner();
+    expect(dummy).toBe(13);
   })
 });
