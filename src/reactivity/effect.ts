@@ -9,13 +9,18 @@ class ReactiveEffect {
     return this._fn();
   }
   stop() {
-    this.deps.forEach((dep) => {
-      // dep 是 Set集合
-      const _dep: Set<any> = dep;
-      // 删除当前 实例
-      _dep.delete(this);
-    });
+    // 删除 deps 里的 effect
+    clearDepEffect(this);
   }
+}
+
+function clearDepEffect(effect) {
+  effect.deps.forEach((dep) => {
+    // dep 是 Set集合
+    const _dep: Set<any> = dep;
+    // 删除当前 实例
+    _dep.delete(effect);
+  });
 }
 
 const targetMap = new Map();
