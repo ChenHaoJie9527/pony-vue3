@@ -496,4 +496,43 @@ export function effect(fn, options: any = {}) {
     });
   ```
 
+### 1.7 reactive 的 readonly 功能
+
+**引述**：`readonly`  是 `reactive` 里的功能，声明一个只读代理对象，不允许被 `setter`，因此不会 `触发依赖`，也不需要做 `依赖收集`
+
+**Tasking**：
+
+- [x] 实现 `readonly` 方法，并导出
+
+  ```tsx
+  export function readonly(raw) {
+    return new Proxy(raw, {
+      get(target, key) {
+        const res = Reflect.get(target, key);
+        return res;
+      },
+      set(target, key, value) {
+        return true;
+      }
+    })
+  }
+  ```
+
+- [x] 通过`happy path` 测试
+
+  ```tsx
+  import { readonly } from "../reactive";
+  
+  describe("happy path", () => {
+    it("readonly", () => {
+      const _object = {
+          foo: 10
+      };
+      const res = readonly(_object);
+      expect(res).not.toBe(_object);
+      expect(res.foo).toBe(10);
+    });
+  });
+  ```
+
   
