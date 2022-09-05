@@ -15,6 +15,7 @@ export const mutableHandles = {
 export const readonlyHandles = {
   get: readonlyGet,
   set(target, key, value) {
+    console.warn('警告：该对象为只读，不可 set!')
     return true;
   },
 };
