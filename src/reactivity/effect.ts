@@ -1,16 +1,23 @@
 class ReactiveEffect {
   private _fn;
   public deps: any[] = [];
+  active: boolean = true;
   constructor(fn, public scheduler?: any) {
     this._fn = fn;
   }
   run() {
+    this.active = true;
     activeEffect = this;
     return this._fn();
   }
   stop() {
-    // 删除 deps 里的 effect
-    clearDepEffect(this);
+    // 性能优化
+    if (this.active) {
+      // 删除 deps 里的 effect
+      clearDepEffect(this);
+      this.active = false;
+    }
+    
   }
 }
 
