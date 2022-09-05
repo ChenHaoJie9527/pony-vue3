@@ -1,13 +1,17 @@
+import { extend } from "../shared";
+
 class ReactiveEffect {
   private _fn;
   public deps: any[] = [];
   active: boolean = true;
+  onStop?: () => void;
   constructor(fn, public scheduler?: any) {
     this._fn = fn;
   }
   run() {
     this.active = true;
     activeEffect = this;
+    
     return this._fn();
   }
   stop() {
@@ -15,6 +19,9 @@ class ReactiveEffect {
     if (this.active) {
       // 删除 deps 里的 effect
       clearDepEffect(this);
+      if (this.onStop) {
+        this.onStop();
+      }
       this.active = false;
     }
   }
@@ -84,7 +91,7 @@ let activeEffect; // 全局变量 用于获取effect的fn
 export function effect(fn, options: any = {}) {
   const { scheduler } = options;
   const _effect = new ReactiveEffect(fn, scheduler);
-
+  extend(_effect, options);
   // effect 初始化执行 fn
   _effect.run();
   // 将 run 方法返回出去 允许被调用
