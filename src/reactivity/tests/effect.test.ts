@@ -79,7 +79,7 @@ describe("effect", () => {
     stop(runner);
     _object.foo = 12;
     // 断言 effect 的 fn 不会被执行 所以值不会变
-    expect(dummy).toBe(11);
+    expect(dummy).not.toBe(12);
 
     // 调用 runner 触发 effect 的 fn
     runner();
