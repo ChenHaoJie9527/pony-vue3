@@ -1,5 +1,5 @@
 import { reactive } from "../reactive";
-import { effect, stop} from "../effect";
+import { effect, stop } from "../effect";
 describe("effect", () => {
   it("happy path", () => {
     const user = reactive({
@@ -62,14 +62,14 @@ describe("effect", () => {
     expect(dummy).toBe(11);
   });
 
-  it('stop', () => {
+  it("stop", () => {
     let dummy;
     const _object = reactive({
-      foo: 10
+      foo: 10,
     });
-    const runner = effect(() =>{
+    const runner = effect(() => {
       dummy = _object.foo;
-    })
+    });
     // update 更新响应对象
     _object.foo = 11;
     expect(dummy).toBe(11);
@@ -87,9 +87,31 @@ describe("effect", () => {
 
     stop(runner);
     _object.foo = 13;
-    expect(dummy).not.toBe(13)
-    
+    expect(dummy).not.toBe(13);
+
     runner();
     expect(dummy).toBe(13);
-  })
+  });
+
+  it("onStop", () => {
+    const _object = reactive({
+      foo: 10,
+    });
+    let count;
+    const onStop = jest.fn(() => {
+      count = _object.foo + 1;
+    });
+    let dummy;
+    const runner = effect(
+      () => {
+        dummy = _object.foo;
+      },
+      { onStop }
+    );
+    expect(onStop).not.toHaveBeenCalled();
+    expect(dummy).toBe(10);
+    stop(runner);
+    expect(count).toBe(11)
+    expect(onStop).toHaveBeenCalledTimes(1);
+  });
 });

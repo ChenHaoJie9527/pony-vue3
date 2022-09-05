@@ -319,7 +319,7 @@ export function effect(fn, options: any = {}) {
   }
   ```
 
-- [ ] 实现 `ReactiveEffect` 类方法 `stop`，类中声明`deps`属性，用于收集 `dep` 容器
+- [x] 实现 `ReactiveEffect` 类方法 `stop`，类中声明`deps`属性，用于收集 `dep` 容器
 
   ```ts
   class ReactiveEffect {
@@ -374,7 +374,7 @@ export function effect(fn, options: any = {}) {
   }
   ```
 
-- [ ] 在 `stop` 方法中调用 `effect` 实例的 `stop`方法
+- [x] 在 `stop` 方法中调用 `effect` 实例的 `stop`方法
 
   ```ts
   // stop 方法
@@ -383,7 +383,7 @@ export function effect(fn, options: any = {}) {
   }
   ```
 
-- [ ] 遍历 deps，清空 dep 容器
+- [x] 遍历 deps，清空 dep 容器
 
   ```ts
   class ReactiveEffect {
@@ -409,6 +409,91 @@ export function effect(fn, options: any = {}) {
       _dep.delete(effect);
     });
   }
+  ```
+
+### 1.6 effect 的 onStop 功能
+
+**引述**：通过给定 `effect` 第二个参数 `onStop` 选项时，当手动 调用 `stop` 函数后，传入 `effect` 返回的 `runner` 函数，那么此时 `onStop` 会被执行。即调用 `sotp` 后，执行 `onStop` 回调函数。
+
+**Tasking**：
+
+- [x] effect 类声明可选方法 onStop，用于在 stop中执行
+
+  ```tsx
+  class ReactiveEffect {
+    private _fn;
+    public deps: any[] = [];
+    active: boolean = true;
+    onStop?: () => void;
+    constructor(fn, public scheduler?: any) {
+      this._fn = fn;
+    }
+    run() {
+      this.active = true;
+      activeEffect = this;
+      
+      return this._fn();
+    }
+    stop() {
+      // 性能优化
+      if (this.active) {
+        // 删除 deps 里的 effect
+        clearDepEffect(this);
+        if (this.onStop) {
+          this.onStop();
+        }
+        this.active = false;
+      }
+    }
+  }
+  ```
+
+- [x] 合并 options 选项 到 effect 中
+
+  ```tsx
+  let activeEffect; // 全局变量 用于获取effect的fn
+  export function effect(fn, options: any = {}) {
+    const { scheduler } = options;
+    const _effect = new ReactiveEffect(fn, scheduler);
+    extend(_effect, options);
+    // effect 初始化执行 fn
+    _effect.run();
+    // 将 run 方法返回出去 允许被调用
+    const runner: any = _effect.run.bind(_effect);
+    // 挂载实例
+    runner.effect = _effect;
+  
+    return runner;
+  }
+  
+  // sharded/index.ts
+  export extend = Object.assign
+  ```
+
+- [x] 单元测试通过
+
+  ```ts
+  it("onStop", () => {
+      const _object = reactive({
+        foo: 10,
+      });
+      let count;
+      const onStop = jest.fn(() => {
+        count = _object.foo + 1;
+      });
+      let dummy;
+      const runner = effect(
+        () => {
+          dummy = _object.foo;
+        },
+        { onStop }
+      );
+      expect(onStop).not.toHaveBeenCalled();
+      expect(dummy).toBe(10);
+      stop(runner);
+      expect(count).toBe(11)
+      expect(onStop).toHaveBeenCalledTimes(1);
+    });
   ```
 
   
