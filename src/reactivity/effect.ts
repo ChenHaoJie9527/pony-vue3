@@ -17,7 +17,6 @@ class ReactiveEffect {
       clearDepEffect(this);
       this.active = false;
     }
-    
   }
 }
 
@@ -53,6 +52,7 @@ export function track(target, key) {
     dep = new Set();
     depsMap.set(key, dep);
   }
+  if (!activeEffect) return;
   // 收集依赖
   dep.add(activeEffect);
   // 收集容器
