@@ -3,6 +3,10 @@
 
 概念：使用 `Jest` 单元测试，通过 `TDD` 思想 驱动，学习Vue3核心思想。
 
+主要功能：
+
+[TOC]
+
 ## 1. reactivity
 
 `Vue3` 响应式核心，对数据进行 `getter` 和 `setter`，`effect` 依赖收集和触发依赖的操作
@@ -535,4 +539,5 @@ export function effect(fn, options: any = {}) {
   });
   ```
 
-  
+### 1.8 reactive - Proxy 的 get，set 封装
+

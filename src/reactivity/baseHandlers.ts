@@ -1,15 +1,21 @@
 import { track, trigger } from "./effect";
 
+// 性能优化：缓存一次，多次使用
+const get = createGetter();
+const set = createSetter();
+const readonlyGet = createGetter(true);
+
 // 封装 proxy - 选项
 export const mutableHandles = {
-  get: createGetter(),
-  set: createSetter(),
+  get,
+  set,
 };
 
 // 封装 readonly proxy - 选项
 export const readonlyHandles = {
-  get: createGetter(true),
+  get: readonlyGet,
   set(target, key, value) {
+    console.warn('警告：该对象为只读，不可 set!')
     return true;
   },
 };
