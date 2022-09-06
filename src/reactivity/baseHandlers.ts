@@ -24,9 +24,13 @@ export const readonlyHandles = {
 // 创建 getter 函数
 function createGetter(isReadonly = false) {
   return (target, key) => {
-    // 针对 isReactive情况，如果访问的代理对象的某个属性，那么会返回 true
+    // 针对 isReactive情况，如果的对象 proxy 对象，那么会返回 true
     if (key === REACTIVE_FLAGS.IS_REACTIVE) {
       return !isReadonly;
+    }
+    // 针对 isReadonly 情况，如果访问的对象是 readonly 对象，则返回true
+    if (key === REACTIVE_FLAGS.IS_READONLY) {
+      return isReadonly;
     }
     // {foo: 10}
     // Reflect 弱引用
