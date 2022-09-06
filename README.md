@@ -541,3 +541,83 @@ export function effect(fn, options: any = {}) {
 
 ### 1.8 reactive - Proxy 的 get，set 封装
 
+1. 封装 get
+
+   ```ts
+   // 创建 getter 函数
+   function createGetter(isReadonly = false) {
+     return (target, key) => {
+       // {foo: 10}
+       // Reflect 弱引用
+       const res = Reflect.get(target, key);
+       if (!isReadonly) {
+         // TODO 依赖收集
+         track(target, key);
+       }
+       return res;
+     };
+   }
+   ```
+
+2. 封装 set
+
+   ```ts
+   // 创建 setter 函数
+   function createSetter() {
+     return (target, key, value) => {
+       const res = Reflect.set(target, key, value);
+       // TODO 触发依赖
+       trigger(target, key);
+       return res;
+     };
+   }
+   ```
+
+3. 封装 mutableHandles
+
+   ```tsx
+   // 性能优化：缓存一次，多次使用
+   const get = createGetter();
+   const set = createSetter();
+   const readonlyGet = createGetter(true);
+   
+   // 封装 proxy - 选项
+   export const mutableHandles = {
+     get,
+     set,
+   }；
+   ```
+
+4. 封装 readonlyHandles
+
+   ```ts
+   // 性能优化：缓存一次，多次使用
+   const get = createGetter();
+   const set = createSetter();
+   const readonlyGet = createGetter(true);
+   // 封装 readonly proxy - 选项
+   export const readonlyHandles = {
+     get: readonlyGet,
+     set(target, key, value) {
+       console.warn('警告：该对象为只读，不可 set!')
+       return true;
+     },
+   };
+   ```
+
+5. 重构后的 reactive
+
+   ```ts
+   import { mutableHandles, readonlyHandles } from "./baseHandlers";
+   export function reactive(raw) {
+     return createActiveOption(raw, mutableHandles);
+   }
+   
+   export function readonly(raw) {
+     return createActiveOption(raw, readonlyHandles);
+   }
+   
+   function createActiveOption(raw: any, baseHandlers: any) {
+     return new Proxy(raw, baseHandlers);
+   }
+   ```
