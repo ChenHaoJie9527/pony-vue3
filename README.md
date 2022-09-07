@@ -621,3 +621,127 @@ export function effect(fn, options: any = {}) {
      return new Proxy(raw, baseHandlers);
    }
    ```
+
+### 1.9 reactive 的 isReactive 功能
+
+**引述**：通过给定 `isReactive` 方法 传入参数，判断该传递参数是否为 `Proxy` 对象，返回 `Boolean`值
+
+**通过下列测试**:
+
+```tsx
+	// 判断当前对象是不是 reactive 代理对象 断言是代理对象
+    expect(isReactive(observed)).toBe(true);
+    // 断言 不是一个代理对象
+    expect(isReactive(original)).toBe(false);
+```
+
+**Tasking**：
+
+- [x] 实现 isReactive 方法，接收 target 参数
+
+  ```tsx
+  /**
+   *
+   * @param target: 需要判断的对象
+   * 当调用 isReactive 时，会触发 getter 操作，即 proxy 的 get
+   */
+  export function isReactive(target) {
+    return !!target[REACTIVE_FLAGS.IS_REACTIVE];
+  }
+  ```
+
+- [x] 访问 target 对象的 key，会触发 `Proxy` 的 `getter`，判断当前的 key 是否为 `__reactive_flag`，是则返回 `true`，否则返回 `false`
+
+  ```tsx
+  // 创建 getter 函数
+  function createGetter(isReadonly = false) {
+    return (target, key) => {
+      // 针对 isReactive情况，如果访问的代理对象的某个属性，那么会返回 true
+      if (key === REACTIVE_FLAGS.IS_REACTIVE) {
+        return !isReadonly;
+      }
+      // {foo: 10}
+      // Reflect 弱引用
+      const res = Reflect.get(target, key);
+      if (!isReadonly) {
+        // TODO 依赖收集
+        track(target, key);
+      }
+      return res;
+    };
+  }
+  ```
+
+### 2.0 reactive 的 isReadonly 功能
+
+**引述**：通过给定 `isReadonly` 方法传递 参数，若该参数 是一个 `readonly` 对象，则返回 `true`，否则返回 `false`
+
+**思路**：通过访问 Target 对象 的 key，会触发 getter ，判断当前 flag 是否相等，若相等，则返回当前传递 的 isReadonly
+
+**通过下列测试**：
+
+```tsx
+it("isReadonly", () => {
+    const user = readonly({ foo: 10 });
+    // 断言 user 是 readonly 对象
+    expect(isReadonly(user)).toBe(true);
+    // 断言 不是 readonly 对象
+    expect(isReadonly({ foo: 10 })).toBe(false);
+  });
+```
+
+**Tasking**：
+
+- [x] 实现 isReadonly 方法，接收 target 参数，表示当前需要判断的对象
+
+  ```tsx
+  /**
+   * 
+   * @param target: 需要判断的对象
+   * 当调用 isReadonly时，会触发 getter 操作，即 proxy 的 get
+   */
+  export function isReadonly(target) {
+    
+  }
+  ```
+
+- [x] 通过访问 target 的 key，触发proxy 的 getter
+
+  ```tsx
+  /**
+   * 
+   * @param target: 需要判断的对象
+   * 当调用 isReadonly时，会触发 getter 操作，即 proxy 的 get
+   */
+  export function isReadonly(target) {
+    return !!target[REACTIVE_FLAGS.IS_READONLY]
+  }
+  ```
+
+- [x] 在proxy 的 getter 里判断当前 flag 与访问的 key 是否一致，一致则返回 isReadonly 的值
+
+  ```tsx
+  // 创建 getter 函数
+  function createGetter(isReadonly = false) {
+    return (target, key) => {
+      // 针对 isReactive情况，如果的对象 proxy 对象，那么会返回 true
+      if (key === REACTIVE_FLAGS.IS_REACTIVE) {
+        return !isReadonly;
+      }
+      // 针对 isReadonly 情况，如果访问的对象是 readonly 对象，则返回true
+      if (key === REACTIVE_FLAGS.IS_READONLY) {
+        return isReadonly;
+      }
+      // {foo: 10}
+      // Reflect 弱引用
+      const res = Reflect.get(target, key);
+      if (!isReadonly) {
+        // TODO 依赖收集
+        track(target, key);
+      }
+      return res;
+    };
+  }
+  ```
+
+  
