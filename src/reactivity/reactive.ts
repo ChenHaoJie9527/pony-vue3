@@ -28,7 +28,7 @@ export function isReactive(target) {
 /**
  * 
  * @param target: 需要判断的对象
- * 当调用 isReadonly时
+ * 当调用 isReadonly时，会触发 getter 操作，即 proxy 的 get
  */
 export function isReadonly(target) {
   return !!target[REACTIVE_FLAGS.IS_READONLY]
