@@ -1,5 +1,7 @@
 import { extend } from "../shared";
 
+let activeEffect; // 全局变量 用于获取effect的fn
+let shouldTrack; // 全局变量 用于控制是否要收集依赖
 class ReactiveEffect {
   private _fn;
   public deps: any[] = [];
@@ -9,10 +11,16 @@ class ReactiveEffect {
     this._fn = fn;
   }
   run() {
-    this.active = true;
+    // 1. 会收集依赖
+    //  shouldTrack 做区分
+    if (!this.active) {
+      return this._fn();
+    }
+    shouldTrack = true;
     activeEffect = this;
-    
-    return this._fn();
+    const res = this._fn();
+    shouldTrack = false;
+    return res;
   }
   stop() {
     // 性能优化
@@ -60,6 +68,7 @@ export function track(target, key) {
     depsMap.set(key, dep);
   }
   if (!activeEffect) return;
+  if (!shouldTrack) return;
   // 收集依赖
   dep.add(activeEffect);
   // 收集容器
@@ -87,7 +96,6 @@ export function trigger(target, key) {
   }
 }
 
-let activeEffect; // 全局变量 用于获取effect的fn
 export function effect(fn, options: any = {}) {
   const { scheduler } = options;
   const _effect = new ReactiveEffect(fn, scheduler);

@@ -67,7 +67,7 @@ describe("effect", () => {
     const _object = reactive({
       foo: 10,
     });
-    const runner = effect(() => {
+    const runner =  effect(() => {
       dummy = _object.foo;
     });
     // update 更新响应对象
@@ -77,7 +77,12 @@ describe("effect", () => {
     // 因为调用当前 stop 后，effect 实例里的 stop 方法会将 deps 收集到的依赖全部清空掉
     // 所以当后续 update 响应对象的时候 trigger 不会 触发 run
     stop(runner);
-    _object.foo = 12;
+    // _object.foo = 12;
+
+    // 报错 拆分 _object.foo = _object.foo + 1; 这里涉及到 get 和 set 的操作
+    // 即当_object.foo时，会将fn依赖收集到容器里。 当+ 1时，就会 setter，触发 依赖，调用 fn
+    _object.foo++;
+
     // 断言 effect 的 fn 不会被执行 所以值不会变
     expect(dummy).not.toBe(12);
 
