@@ -9,7 +9,7 @@
 
 ## 1. reactivity
 
-`Vue3` 响应式核心，对数据进行 `getter` 和 `setter`，`effect` 依赖收集和触发依赖的操作
+`Vue3` 响应式核心，对数据进行 `getter` 和 `setter`，`effect` 依赖收集和触发依赖的操作，并对外提供许多方法，可以单独作为一个库使用。
 
 例子：
 
